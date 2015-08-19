@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 import re, sys, random
+#import cPickle as pickle
 
 # Initialize Mapping
 tempMapping = {}
@@ -28,7 +29,14 @@ def fixCaps(word):
 # Get contents of file, split into a list of words and (some) punctuation
 def wordlist(filename):
   f = open(filename, 'r')
-  wordlist = [fixCaps(w) for w in re.findall(r"[\w']+|[.,!?;]", f.read())]
+  wordlist = []
+  for w in re.findall(r"[\w']+|[.,!?;_]", f.read()):
+    w = fixCaps(w)
+    if (w not in "'_"):
+      wordlist.append(w)
+
+  #wordlist = [fixCaps(w) for w in re.findall(r"[\w']+|[.,!?;]", f.read())]
+  #print wordlist
   f.close()
   return wordlist
 
@@ -54,14 +62,14 @@ def addItemToTempMapping(history, word):
 def buildMapping(wordlist, markovLength):
   global tempMapping
   starts.append(wordlist[0])
-  for i in xrange(1, len(wordlist)-1):
+  for i in xrange(0, len(wordlist)-1):
     if i <= markovLength:
       history = wordlist[:i+1]
     else:
       history = wordlist[i - markovLength + 1 : i + 1]
     follow = wordlist[i + 1]
     # if the last elt was a period, add the next word to the start list
-    if history[-1] == "." and follow not in ".,!?;":
+    if (history[-1] in ".!?") and follow not in ".,!?;+_'":
       starts.append(follow)
     addItemToTempMapping(history, follow)
   # Normalize the values in tempMapping, put them into mapping
@@ -94,6 +102,8 @@ def genSentence(markovLength):
   # Keep adding words until we hit a period
   while (curr not in ".!?"):
     curr = next(prevList)
+    #if (curr in "'_"):
+    #  continue
     prevList.append(curr)
     # if the prevList has gotten too long, trim it
     if (len(prevList) > markovLength):
@@ -110,7 +120,7 @@ def genSentence(markovLength):
 
 def main():
   if (len(sys.argv) < 2):
-    sys.stderr.write('Usage: ' + sys.argv[0] + ' text_source [chain_length=1]\n')
+    sys.stderr.write('Usage: ' + sys.argv[0] + ' text_source [chain_length=1] [number_of_sentences=1] \n')
     sys.exit(1)
 
   filename = sys.argv[1]
@@ -121,11 +131,20 @@ def main():
   if (len(sys.argv) >= 4):
     genNSentences = int(sys.argv[3])
 
-  buildMapping(wordlist(filename), markovLength)
+  #if ('.pkl' in filename):
+  #  with open(filename, 'rb') as df:
+  #    pickle.load(df)
+  #  print mapping
+  #else:
+  #  buildMapping(wordlist(filename), markovLength)
+  #  #print mapping
+  #  with open('mapping.pkl', 'wb') as df:
+  #    pickle.dump(mapping, df)
 
+  buildMapping(wordlist(filename), markovLength)
   for j in xrange(genNSentences):
     print genSentence(markovLength)
-    print "\n\n"
+    print "\n"
 
 if __name__ == "__main__":
   main()

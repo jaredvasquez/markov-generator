@@ -3,3 +3,4 @@ A fun project to generate pseudo-random sentences using markov chains
 Ideas for improvements:
   -- Get training input from web scraping
   -- Find a way to store the mappings and continually build
+  -- Might be fun to generate presidential speaches or debates, maybe news articles
